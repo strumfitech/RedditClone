@@ -4,24 +4,34 @@ import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
 import './Auth.css';
 
 function Login({ login }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
-    if (!username || !password) {
+    setLoading(true);
+
+    if (!email || !password) {
       setError('Please fill in all fields');
+      setLoading(false);
       return;
     }
 
-    if (login(username, password)) {
-      navigate('/');
-    } else {
-      setError('Invalid username or password');
+    try {
+      const success = await login(email, password);
+      if (success) {
+        navigate('/');
+      } else {
+        setError('Invalid email or password');
+      }
+    } catch (error) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,11 +52,12 @@ function Login({ login }) {
             <Form onSubmit={handleSubmit}>
               <Form.Group className="mb-3">
                 <Form.Control
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   size="lg"
+                  disabled={loading}
                 />
               </Form.Group>
 
@@ -57,16 +68,18 @@ function Login({ login }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   size="lg"
+                  disabled={loading}
                 />
               </Form.Group>
 
-              <Button 
-                variant="primary" 
-                type="submit" 
+              <Button
+                variant="primary"
+                type="submit"
                 className="w-100 auth-button mb-3"
                 size="lg"
+                disabled={loading}
               >
-                Log In
+                {loading ? 'Logging In...' : 'Log In'}
               </Button>
             </Form>
 

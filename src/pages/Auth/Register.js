@@ -9,41 +9,49 @@ function Register({ register }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+    setLoading(true);
+
     if (!username || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
+      setLoading(false);
       return;
     }
 
     if (username.length < 3) {
       setError('Username must be at least 3 characters long');
+      setLoading(false);
       return;
     }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
+      setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      setLoading(false);
       return;
     }
 
-    if (!email.includes('@')) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    if (register(username, email, password)) {
-      navigate('/');
-    } else {
-      setError('Username already exists');
+    try {
+      const success = await register(username, email, password);
+      if (success) {
+        navigate('/');
+      } else {
+        setError('Registration failed. Email might already be in use.');
+      }
+    } catch (error) {
+      setError('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,6 +77,7 @@ function Register({ register }) {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   size="lg"
+                  disabled={loading}
                 />
                 <Form.Text className="text-muted">
                   Choose wisely—usernames are permanent
@@ -82,6 +91,7 @@ function Register({ register }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   size="lg"
+                  disabled={loading}
                 />
               </Form.Group>
 
@@ -92,6 +102,7 @@ function Register({ register }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   size="lg"
+                  disabled={loading}
                 />
               </Form.Group>
 
@@ -102,16 +113,18 @@ function Register({ register }) {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   size="lg"
+                  disabled={loading}
                 />
               </Form.Group>
 
-              <Button 
-                variant="primary" 
-                type="submit" 
+              <Button
+                variant="primary"
+                type="submit"
                 className="w-100 auth-button mb-3"
                 size="lg"
+                disabled={loading}
               >
-                Sign Up
+                {loading ? 'Creating Account...' : 'Sign Up'}
               </Button>
             </Form>
 

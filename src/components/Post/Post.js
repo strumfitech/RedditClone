@@ -91,7 +91,7 @@ function Post({ post, updatePost, deletePost, user, compact = false }) {
     }
   };
 
-  const isAuthor = user && user.username === post.author;
+  const isAuthor = user && user.username === (post.authorUsername || post.author);
 
   return (
     <>
@@ -117,15 +117,15 @@ function Post({ post, updatePost, deletePost, user, compact = false }) {
 
         <div className="post-body">
           <div className="post-header">
-            <Link to={`/r/${post.community.replace('r/', '')}`} className="post-community">
-              {post.community}
+            <Link to={`/r/${(post.communityName || post.community || '').replace('r/', '')}`} className="post-community">
+              {post.communityName || post.community}
             </Link>
             <span className="post-dot">•</span>
             <span className="post-meta">
-              Posted by <Link to={`/user/${post.author}`} className="post-author">u/{post.author}</Link>
+              Posted by <Link to={`/user/${post.authorUsername || post.author}`} className="post-author">u/{post.authorUsername || post.author}</Link>
             </span>
             <span className="post-dot">•</span>
-            <span className="post-time">{formatTime(post.timestamp)}</span>
+            <span className="post-time">{formatTime(post.createdAt || post.timestamp)}</span>
           </div>
 
           <h3 className="post-title">
@@ -148,7 +148,7 @@ function Post({ post, updatePost, deletePost, user, compact = false }) {
           <div className="post-actions">
             <Link to={`/post/${post.id}`} className="action-btn">
               <i className="bi bi-chat"></i>
-              <span>{post.comments?.length || 0} Comments</span>
+              <span>{post.commentCount || post.comments?.length || 0} Comments</span>
             </Link>
             <button className="action-btn">
               <i className="bi bi-share"></i>

@@ -13,190 +13,258 @@ import Profile from './pages/Profile/Profile';
 import CreateCommunity from './pages/CreateCommunity/CreateCommunity';
 import Search from './pages/Search/Search';
 
+// Import Firebase services
+import {
+  firebaseAuth,
+  postService,
+  commentService,
+  communityService,
+  userService,
+  voteService,
+  firebaseUtils
+} from './services/firebaseService';
+
 function App() {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [communities, setCommunities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
 
+  // Firebase Auth State Listener
   useEffect(() => {
-    // Load user from localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-
-    // Load posts from localStorage
-    const savedPosts = localStorage.getItem('posts');
-    if (savedPosts) {
-      setPosts(JSON.parse(savedPosts));
-    } else {
-      // Initialize with sample posts
-      const samplePosts = [
-        {
-          id: 1,
-          title: "Welcome to Reddit Clone!",
-          content: "This is a fully functional Reddit clone built with React, HTML, CSS, and Bootstrap. Feel free to explore all features!",
-          author: "admin",
-          community: "r/announcements",
-          upvotes: 42,
-          downvotes: 2,
-          comments: [],
-          timestamp: new Date().toISOString(),
-          type: "text"
-        },
-        {
-          id: 2,
-          title: "Check out this amazing React tutorial!",
-          content: "https://react.dev",
-          author: "developer",
-          community: "r/programming",
-          upvotes: 156,
-          downvotes: 12,
-          comments: [],
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          type: "link"
+    const unsubscribe = firebaseAuth.onAuthStateChange(async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in
+        try {
+          // Get additional user data from Firestore
+          const userResult = await userService.getUserByUid(firebaseUser.uid);
+          if (userResult.success) {
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName,
+              ...userResult.user
+            });
+          } else {
+            // Fallback to basic Firebase user data
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName,
+              username: firebaseUser.displayName || firebaseUser.email,
+              karma: 0
+            });
+          }
+        } catch (error) {
+          console.error('Error loading user data:', error);
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            username: firebaseUser.displayName || firebaseUser.email,
+            karma: 0
+          });
         }
-      ];
-      setPosts(samplePosts);
-      localStorage.setItem('posts', JSON.stringify(samplePosts));
-    }
+      } else {
+        // User is signed out
+        setUser(null);
+      }
+      setAuthLoading(false);
+    });
 
-    // Load communities from localStorage
-    const savedCommunities = localStorage.getItem('communities');
-    if (savedCommunities) {
-      setCommunities(JSON.parse(savedCommunities));
-    } else {
-      // Initialize with sample communities
-      const sampleCommunities = [
-        { id: 1, name: "r/announcements", members: 1250, description: "Official announcements" },
-        { id: 2, name: "r/programming", members: 5420, description: "Programming discussions" },
-        { id: 3, name: "r/funny", members: 8930, description: "Funny content" },
-        { id: 4, name: "r/technology", members: 3210, description: "Technology news" },
-        { id: 5, name: "r/gaming", members: 6540, description: "Gaming community" }
-      ];
-      setCommunities(sampleCommunities);
-      localStorage.setItem('communities', JSON.stringify(sampleCommunities));
-    }
+    return () => unsubscribe();
   }, []);
 
-  const login = (username, password) => {
-    // Simple authentication (in real app, this would be an API call)
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    if (users[username] && users[username].password === password) {
-      const userData = { username, karma: users[username].karma || 0 };
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      return true;
-    }
-    return false;
-  };
+  // Load initial data
+  useEffect(() => {
+    const loadInitialData = async () => {
+      if (authLoading) return;
 
-  const register = (username, email, password) => {
-    // Simple registration (in real app, this would be an API call)
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    if (users[username]) {
-      return false; // User already exists
-    }
-    users[username] = { email, password, karma: 0, joinDate: new Date().toISOString() };
-    localStorage.setItem('users', JSON.stringify(users));
-    const userData = { username, karma: 0 };
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    return true;
-  };
+      try {
+        setLoading(true);
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
+        // Load communities
+        const communitiesResult = await communityService.getCommunities();
+        if (communitiesResult.success) {
+          setCommunities(communitiesResult.communities);
+        }
 
-  const addPost = (post) => {
-    const newPost = {
-      ...post,
-      id: Date.now(),
-      author: user.username,
-      upvotes: 1,
-      downvotes: 0,
-      comments: [],
-      timestamp: new Date().toISOString()
+        // Load posts
+        const postsResult = await postService.getPosts();
+        if (postsResult.success) {
+          setPosts(postsResult.posts);
+        }
+
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    const updatedPosts = [newPost, ...posts];
-    setPosts(updatedPosts);
-    localStorage.setItem('posts', JSON.stringify(updatedPosts));
-    return newPost.id;
+
+    loadInitialData();
+  }, [authLoading]);
+
+  // Firebase Authentication Functions
+  const login = async (email, password) => {
+    try {
+      const result = await firebaseAuth.login(email, password);
+      return result.success;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
   };
 
-  const updatePost = (postId, updates) => {
-    const updatedPosts = posts.map(post => 
-      post.id === postId ? { ...post, ...updates } : post
-    );
-    setPosts(updatedPosts);
-    localStorage.setItem('posts', JSON.stringify(updatedPosts));
+  const register = async (username, email, password) => {
+    try {
+      const result = await firebaseAuth.register(email, password, username);
+      return result.success;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
+    }
   };
 
-  const deletePost = (postId) => {
-    const updatedPosts = posts.filter(post => post.id !== postId);
-    setPosts(updatedPosts);
-    localStorage.setItem('posts', JSON.stringify(updatedPosts));
-  };
-
-  const updateComment = (postId, commentId, content) => {
-    const updatedPosts = posts.map(post => {
-      if (post.id === postId) {
-        const updatedComments = post.comments.map(comment =>
-          comment.id === commentId ? { ...comment, content, edited: true } : comment
-        );
-        return { ...post, comments: updatedComments };
+  const logout = async () => {
+    try {
+      const result = await firebaseAuth.logout();
+      if (result.success) {
+        setUser(null);
       }
-      return post;
-    });
-    setPosts(updatedPosts);
-    localStorage.setItem('posts', JSON.stringify(updatedPosts));
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
-  const deleteComment = (postId, commentId) => {
-    const updatedPosts = posts.map(post => {
-      if (post.id === postId) {
-        const updatedComments = post.comments.filter(comment => comment.id !== commentId);
-        return { ...post, comments: updatedComments };
+  // Firebase Data Functions
+  const addPost = async (postData) => {
+    if (!user) return null;
+
+    try {
+      // Find community by name
+      const community = communities.find(c => c.name === postData.community);
+      if (!community) {
+        console.error('Community not found:', postData.community);
+        return null;
       }
-      return post;
-    });
-    setPosts(updatedPosts);
-    localStorage.setItem('posts', JSON.stringify(updatedPosts));
-  };
 
-  const addComment = (postId, comment) => {
-    const updatedPosts = posts.map(post => {
-      if (post.id === postId) {
-        const newComment = {
-          id: Date.now(),
-          author: user.username,
-          content: comment,
-          upvotes: 1,
-          downvotes: 0,
-          timestamp: new Date().toISOString()
-        };
-        return { ...post, comments: [...post.comments, newComment] };
+      const post = {
+        title: postData.title,
+        content: postData.content,
+        type: postData.type || 'text',
+        communityId: community.id,
+        communityName: community.name
+      };
+
+      const result = await postService.createPost(post, user);
+      if (result.success) {
+        // Refresh posts
+        const postsResult = await postService.getPosts();
+        if (postsResult.success) {
+          setPosts(postsResult.posts);
+        }
+        return result.postId;
       }
-      return post;
-    });
-    setPosts(updatedPosts);
-    localStorage.setItem('posts', JSON.stringify(updatedPosts));
+    } catch (error) {
+      console.error('Error creating post:', error);
+    }
+    return null;
   };
 
-  const addCommunity = (community) => {
-    const newCommunity = {
-      ...community,
-      id: Date.now(),
-      members: 1,
-      createdBy: user.username,
-      createdAt: new Date().toISOString()
-    };
-    const updatedCommunities = [...communities, newCommunity];
-    setCommunities(updatedCommunities);
-    localStorage.setItem('communities', JSON.stringify(updatedCommunities));
-    return newCommunity.id;
+  const updatePost = async (postId, updates) => {
+    try {
+      if (updates.upvotes !== undefined || updates.downvotes !== undefined) {
+        // Update votes
+        const result = await postService.updatePostVotes(postId, updates.upvotes, updates.downvotes);
+        if (result.success) {
+          // Refresh posts
+          const postsResult = await postService.getPosts();
+          if (postsResult.success) {
+            setPosts(postsResult.posts);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  };
+
+  const deletePost = async (postId) => {
+    if (!user) return;
+
+    try {
+      const result = await postService.deletePost(postId, user.uid);
+      if (result.success) {
+        // Refresh posts
+        const postsResult = await postService.getPosts();
+        if (postsResult.success) {
+          setPosts(postsResult.posts);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
+  const addComment = async (postId, commentContent) => {
+    if (!user) return;
+
+    try {
+      const result = await commentService.addComment(postId, commentContent, user);
+      if (result.success) {
+        // Refresh posts to get updated comment count
+        const postsResult = await postService.getPosts();
+        if (postsResult.success) {
+          setPosts(postsResult.posts);
+        }
+        return result.commentId;
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+    return null;
+  };
+
+  const updateComment = async (postId, commentId, content) => {
+    // Comments are updated directly in the component using Firebase
+    // This function is kept for compatibility but may not be needed
+    console.log('updateComment called - implement if needed');
+  };
+
+  const deleteComment = async (postId, commentId) => {
+    // Comments are deleted directly in the component using Firebase
+    // This function is kept for compatibility but may not be needed
+    console.log('deleteComment called - implement if needed');
+  };
+
+  const addCommunity = async (communityData) => {
+    if (!user) return null;
+
+    try {
+      const community = {
+        name: `r/${communityData.name}`,
+        displayName: communityData.name,
+        description: communityData.description,
+        rules: communityData.rules || '',
+        isPrivate: false,
+        isRestricted: false
+      };
+
+      const result = await communityService.createCommunity(community, user);
+      if (result.success) {
+        // Refresh communities
+        const communitiesResult = await communityService.getCommunities();
+        if (communitiesResult.success) {
+          setCommunities(communitiesResult.communities);
+        }
+        return result.communityId;
+      }
+    } catch (error) {
+      console.error('Error creating community:', error);
+    }
+    return null;
   };
 
   return (

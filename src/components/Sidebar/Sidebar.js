@@ -4,7 +4,7 @@ import { Card, Button, ListGroup } from 'react-bootstrap';
 import './Sidebar.css';
 
 function Sidebar({ communities, user }) {
-  const topCommunities = communities.slice(0, 5).sort((a, b) => b.members - a.members);
+  const topCommunities = communities.slice(0, 5).sort((a, b) => (b.memberCount || b.members || 0) - (a.memberCount || a.members || 0));
 
   return (
     <div className="sidebar">
@@ -63,7 +63,7 @@ function Sidebar({ communities, user }) {
                 <div className="community-details">
                   <div className="community-name">{community.name}</div>
                   <div className="community-members">
-                    {community.members.toLocaleString()} members
+                    {(community.memberCount || community.members || 0).toLocaleString()} members
                   </div>
                 </div>
               </div>
