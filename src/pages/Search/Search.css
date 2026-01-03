@@ -1,0 +1,136 @@
+.search-container {
+  flex: 1;
+  max-width: 100%;
+  padding: 20px;
+}
+
+.search-content {
+  max-width: 740px;
+  margin: 0 auto;
+}
+
+.search-header-card {
+  background-color: white;
+  border: 1px solid var(--reddit-border);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.search-results-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--reddit-dark);
+  margin-bottom: 8px;
+}
+
+.search-filter-card {
+  background-color: white;
+  border: 1px solid var(--reddit-border);
+  border-radius: 4px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.search-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px;
+}
+
+.filter-nav {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.sort-select {
+  width: auto;
+  min-width: 150px;
+  border-radius: 20px;
+  border: 1px solid var(--reddit-border);
+}
+
+.search-results {
+  /* Results will stack vertically */
+}
+
+.communities-results-card {
+  background-color: white;
+  border: 1px solid var(--reddit-border);
+  border-radius: 4px;
+}
+
+.community-result-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--reddit-light-gray);
+}
+
+.community-result-item:last-child {
+  border-bottom: none;
+}
+
+.community-result-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--reddit-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.community-result-info {
+  flex: 1;
+}
+
+.community-result-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--reddit-dark);
+  text-decoration: none;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.community-result-name:hover {
+  text-decoration: underline;
+}
+
+.community-result-description {
+  font-size: 14px;
+  color: var(--reddit-gray);
+  margin-bottom: 8px;
+}
+
+.community-result-members {
+  font-size: 12px;
+  color: var(--reddit-gray);
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .search-container {
+    padding: 10px;
+  }
+  
+  .search-filters {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .filter-nav {
+    width: 100%;
+  }
+  
+  .sort-select {
+    width: 100%;
+  }
+}

@@ -1,0 +1,64 @@
+.home-container {
+  flex: 1;
+  max-width: 640px;
+}
+
+.filter-card {
+  background-color: white;
+  border: 1px solid var(--reddit-border);
+  border-radius: 4px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.filter-nav {
+  padding: 12px 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.filter-link {
+  color: var(--reddit-gray);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.2s;
+}
+
+.filter-link:hover {
+  background-color: var(--reddit-light-gray);
+  color: var(--reddit-dark);
+}
+
+.filter-link.active {
+  background-color: var(--reddit-blue);
+  color: white;
+}
+
+.posts-container {
+  /* Posts will stack vertically */
+}
+
+.empty-state {
+  background-color: white;
+  border: 1px solid var(--reddit-border);
+  border-radius: 4px;
+  padding: 40px 20px;
+}
+
+@media (max-width: 768px) {
+  .home-container {
+    max-width: 100%;
+  }
+  
+  .filter-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .filter-link {
+    white-space: nowrap;
+  }
+}

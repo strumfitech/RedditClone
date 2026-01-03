@@ -1,0 +1,34 @@
+.App {
+  min-height: 100vh;
+  background-color: #DAE0E6;
+}
+
+.main-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-top: 56px; /* Height of navbar */
+}
+
+.content-wrapper {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+@media (max-width: 992px) {
+  .content-wrapper {
+    flex-direction: column;
+  }
+  
+  .main-container {
+    padding-top: 56px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 10px;
+  }
+}
